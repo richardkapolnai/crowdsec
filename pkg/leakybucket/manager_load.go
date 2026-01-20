@@ -162,6 +162,7 @@ func loadBucketFactoriesFromFile(item *cwhub.Item, hub *cwhub.Hub, buckets *Buck
 		bucketFactory.DataDir = hub.GetDataDir()
 		// check empty
 		if bucketFactory.Name == "" {
+			// TODO: redundant?
 			log.Errorf("Won't load nameless bucket")
 			return nil, errors.New("nameless bucket")
 		}
@@ -315,6 +316,7 @@ func (f *BucketFactory) LoadBucket() error {
 
 		filovflw, err := NewOverflowFilter(f)
 		if err != nil {
+			// TODO: redundant?
 			f.logger.Errorf("Error creating overflow_filter : %s", err)
 			return fmt.Errorf("error creating overflow_filter: %w", err)
 		}

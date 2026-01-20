@@ -222,6 +222,7 @@ func PourItemToHolders(ctx context.Context, parsed pipeline.Event, holders []Buc
 			// we assume we a bool should add type check here
 			if condition, ok = output.(bool); !ok {
 				holders[idx].logger.Errorf("unexpected non-bool return : %T", output)
+				// TODO: fatal???
 				holders[idx].logger.Fatalf("Filter issue")
 			}
 			if !condition {
