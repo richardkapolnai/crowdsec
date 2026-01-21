@@ -11,6 +11,7 @@ import (
 )
 
 // Uniq creates three new functions that share the same initialisation and the same scope.
+// ^^^ XXX: ?
 // They are triggered respectively:
 // on pour
 // on overflow
