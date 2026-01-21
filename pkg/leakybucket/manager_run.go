@@ -18,6 +18,7 @@ import (
 )
 
 var (
+	// TODO: no global, where is this populated?
 	serialized      map[string]Leaky
 )
 

@@ -24,6 +24,7 @@ type CancelProcessor struct {
 }
 
 var (
+	// TODO: no globals
 	cancelExprCacheLock sync.Mutex
 	cancelExprCache     map[string]struct {
 		CancelOnFilter *vm.Program

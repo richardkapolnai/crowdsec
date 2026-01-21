@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	// TODO: no globals
 	conditionalExprCache     = make(map[string]*vm.Program)
 	conditionalExprCacheLock sync.Mutex
 )
