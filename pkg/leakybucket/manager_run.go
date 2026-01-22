@@ -76,7 +76,7 @@ func GarbageCollectBuckets(deadline time.Time, bucketStore *BucketStore) {
 func PourItemToBucket(
 	ctx context.Context,
 	bucket *Leaky,
-	holder BucketFactory,
+	holder *BucketFactory,
 	bucketStore *BucketStore,
 	parsed *pipeline.Event,
 	collector *PourCollector,
@@ -169,7 +169,7 @@ func LoadOrStoreBucketFromHolder(
 	ctx context.Context,
 	partitionKey string,
 	buckets *BucketStore,
-	holder BucketFactory,
+	holder *BucketFactory,
 	expectMode int,
 ) (*Leaky, error) {
 	biface, ok := buckets.Bucket_map.Load(partitionKey)
@@ -265,10 +265,10 @@ func PourItemToHolders(
 				return false, errors.New("groupby wrong type")
 			}
 		}
-		buckey := GetKey(holders[idx], groupby)
+		buckey := GetKey(&holders[idx], groupby)
 
 		// we need to either find the existing bucket, or create a new one (if it's the first event to hit it for this partition key)
-		bucket, err := LoadOrStoreBucketFromHolder(ctx, buckey, buckets, holders[idx], parsed.ExpectMode)
+		bucket, err := LoadOrStoreBucketFromHolder(ctx, buckey, buckets, &holders[idx], parsed.ExpectMode)
 		if err != nil {
 			return false, fmt.Errorf("failed to load or store bucket: %w", err)
 		}
@@ -287,7 +287,7 @@ func PourItemToHolders(
 			orderEvent[buckey].Add(1)
 		}
 
-		ok, err := PourItemToBucket(ctx, bucket, holders[idx], buckets, &parsed, collector)
+		ok, err := PourItemToBucket(ctx, bucket, &holders[idx], buckets, &parsed, collector)
 
 		if bucket.orderEvent {
 			orderEvent[buckey].Wait()
