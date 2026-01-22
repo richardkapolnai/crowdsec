@@ -48,7 +48,7 @@ func (p *BayesianProcessor) OnBucketInit(f *BucketFactory) error {
 			return err
 		}
 		bayesianEventArray[index] = &BayesianEvent{
-			rawCondition: bcond,
+			rawCondition:             bcond,
 			conditionalFilterRuntime: prog,
 		}
 	}

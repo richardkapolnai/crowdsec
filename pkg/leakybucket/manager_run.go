@@ -19,7 +19,7 @@ import (
 
 var (
 	// TODO: no global, where is this populated?
-	serialized      map[string]Leaky
+	serialized map[string]Leaky
 )
 
 /*
@@ -73,7 +73,14 @@ func GarbageCollectBuckets(deadline time.Time, bucketStore *BucketStore) {
 	}
 }
 
-func PourItemToBucket(ctx context.Context, bucket *Leaky, holder BucketFactory, bucketStore *BucketStore, parsed *pipeline.Event, collector *PourCollector) (bool, error) {
+func PourItemToBucket(
+	ctx context.Context,
+	bucket *Leaky,
+	holder BucketFactory,
+	bucketStore *BucketStore,
+	parsed *pipeline.Event,
+	collector *PourCollector,
+) (bool, error) {
 	var sent bool
 	var buckey = bucket.Mapkey
 	var err error
@@ -158,7 +165,13 @@ func PourItemToBucket(ctx context.Context, bucket *Leaky, holder BucketFactory, 
 	return sent, nil
 }
 
-func LoadOrStoreBucketFromHolder(ctx context.Context, partitionKey string, buckets *BucketStore, holder BucketFactory, expectMode int) (*Leaky, error) {
+func LoadOrStoreBucketFromHolder(
+	ctx context.Context,
+	partitionKey string,
+	buckets *BucketStore,
+	holder BucketFactory,
+	expectMode int,
+) (*Leaky, error) {
 	biface, ok := buckets.Bucket_map.Load(partitionKey)
 
 	/* the bucket doesn't exist, create it !*/
@@ -199,7 +212,13 @@ func LoadOrStoreBucketFromHolder(ctx context.Context, partitionKey string, bucke
 
 var orderEvent map[string]*sync.WaitGroup
 
-func PourItemToHolders(ctx context.Context, parsed pipeline.Event, holders []BucketFactory, buckets *BucketStore, collector *PourCollector) (bool, error) {
+func PourItemToHolders(
+	ctx context.Context,
+	parsed pipeline.Event,
+	holders []BucketFactory,
+	buckets *BucketStore,
+	collector *PourCollector,
+) (bool, error) {
 	var ok, condition, poured bool
 
 	if collector != nil {
