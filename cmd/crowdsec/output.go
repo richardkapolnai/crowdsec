@@ -56,7 +56,7 @@ func runOutput(
 	ctx context.Context,
 	input chan pipeline.Event,
 	overflow chan pipeline.Event,
-	buckets *leaky.Buckets,
+	bucketStore *leaky.BucketStore,
 	postOverflowCTX parser.UnixParserCtx,
 	postOverflowNodes []parser.Node,
 	client *apiclient.ApiClient,
@@ -108,7 +108,7 @@ func runOutput(
 			ov := event.Overflow
 			// if alert is empty and mapKey is present, the overflow is just to cleanup bucket
 			if ov.Alert == nil && ov.Mapkey != "" {
-				buckets.Bucket_map.Delete(event.Overflow.Mapkey)
+				bucketStore.Bucket_map.Delete(event.Overflow.Mapkey)
 				break
 			}
 
