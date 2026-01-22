@@ -111,7 +111,7 @@ func NewLeakyFromFactory(f *BucketFactory) *Leaky {
 		AllOut:          f.ret,
 		Capacity:        f.Capacity,
 		Leakspeed:       f.leakspeed,
-		BucketConfig:    &f,
+		BucketConfig:    f,
 		Pour:            Pour,
 		Reprocess:       f.Reprocess,
 		Profiling:       f.Profiling,
