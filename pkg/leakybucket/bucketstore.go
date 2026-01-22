@@ -11,6 +11,7 @@ import (
 type BucketStore struct {
 	wgDumpState *sync.WaitGroup
 	wgPour      *sync.WaitGroup
+	// evaluate regular map + mutex
 	Bucket_map  *sync.Map
 }
 
