@@ -28,9 +28,7 @@ func GarbageCollectBuckets(deadline time.Time, bucketStore *BucketStore) {
 	defer bucketStore.wgDumpState.Done()
 
 	toflush := []string{}
-	bucketStore.BucketMap.Range(func(rkey, rvalue any) bool {
-		key := rkey.(string)
-		val := rvalue.(*Leaky)
+	bucketStore.Range(func(key string, val *Leaky) bool {
 		// bucket already overflowed, we can kill it
 		if !val.Ovflw_ts.IsZero() {
 			val.logger.Debugf("overflowed at %s.", val.Ovflw_ts)
@@ -59,7 +57,7 @@ func GarbageCollectBuckets(deadline time.Time, bucketStore *BucketStore) {
 	})
 	log.Infof("Cleaned %d buckets", len(toflush))
 	for _, flushkey := range toflush {
-		bucketStore.BucketMap.Delete(flushkey)
+		bucketStore.Delete(flushkey)
 	}
 }
 
@@ -93,7 +91,7 @@ func PourItemToBucket(
 			if !ok {
 				// the bucket was found and dead, get a new one and continue
 				bucket.logger.Tracef("Bucket %s found dead, cleanup the body", buckey)
-				bucketStore.BucketMap.Delete(buckey)
+				bucketStore.Delete(buckey)
 				sigclosed += 1
 				bucket, err = LoadOrStoreBucketFromHolder(ctx, buckey, bucketStore, holder, parsed.ExpectMode)
 				if err != nil {
@@ -122,7 +120,7 @@ func PourItemToBucket(
 				}
 				if d.After(lastTs.Add(bucket.Duration)) {
 					bucket.logger.Tracef("bucket is expired (curr event: %s, bucket deadline: %s), kill", d, lastTs.Add(bucket.Duration))
-					bucketStore.BucketMap.Delete(buckey)
+					bucketStore.Delete(buckey)
 					// not sure about this, should we create a new one ?
 					sigclosed += 1
 					bucket, err = LoadOrStoreBucketFromHolder(ctx, buckey, bucketStore, holder, parsed.ExpectMode)
@@ -159,9 +157,9 @@ func LoadOrStoreBucketFromHolder(
 	holder *BucketFactory,
 	expectMode int,
 ) (*Leaky, error) {
-	biface, ok := buckets.BucketMap.Load(partitionKey)
+	leaky, ok := buckets.Load(partitionKey)
 	if ok {
-		return biface.(*Leaky), nil
+		return leaky, nil
 	}
 
 	/* the bucket doesn't exist, create it !*/
@@ -180,22 +178,22 @@ func LoadOrStoreBucketFromHolder(
 	freshBucket.In = make(chan *pipeline.Event)
 	freshBucket.Mapkey = partitionKey
 	freshBucket.Signal = make(chan bool, 1)
-	actual, stored := buckets.BucketMap.LoadOrStore(partitionKey, freshBucket)
+	actual, stored := buckets.LoadOrStore(partitionKey, freshBucket)
 	if !stored {
 		go func() {
 			ctx, cancel := context.WithCancel(ctx)
 			freshBucket.cancel = cancel
 			freshBucket.LeakRoutine(ctx)
 		}()
-		biface = freshBucket
+		leaky = freshBucket
 		// once the created goroutine is ready to process event, we can return it
 		<-freshBucket.Signal
 	} else {
 		holder.logger.Debugf("Unexpectedly found exisint bucket for %s", partitionKey)
-		biface = actual
+		leaky = actual
 	}
 	holder.logger.Debugf("Created new bucket %s", partitionKey)
-	return biface.(*Leaky), nil
+	return leaky, nil
 }
 
 var orderEvent map[string]*sync.WaitGroup
