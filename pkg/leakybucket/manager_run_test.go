@@ -14,7 +14,7 @@ import (
 func expectBucketCount(bucketStore *BucketStore, expected int) error {
 	count := 0
 
-	bucketStore.Bucket_map.Range(func(_, _ any) bool {
+	bucketStore.BucketMap.Range(func(_, _ any) bool {
 		count++
 		return true
 	})
@@ -32,7 +32,7 @@ func TestGCandDump(t *testing.T) {
 		ctx         = t.Context()
 	)
 
-	Holders := []BucketFactory{
+	holders := []BucketFactory{
 		// one overflowing soon + bh
 		{
 			Name:        "test_counter_fast",
@@ -72,13 +72,13 @@ func TestGCandDump(t *testing.T) {
 		},
 	}
 
-	for idx := range Holders {
-		if err := Holders[idx].LoadBucket(); err != nil {
-			t.Fatalf("while loading (%d/%d): %s", idx, len(Holders), err)
+	for idx := range holders {
+		if err := holders[idx].LoadBucket(); err != nil {
+			t.Fatalf("while loading (%d/%d): %s", idx, len(holders), err)
 		}
 
-		if err := Holders[idx].Validate(); err != nil {
-			t.Fatalf("while validating (%d/%d): %s", idx, len(Holders), err)
+		if err := holders[idx].Validate(); err != nil {
+			t.Fatalf("while validating (%d/%d): %s", idx, len(holders), err)
 		}
 	}
 
@@ -86,7 +86,7 @@ func TestGCandDump(t *testing.T) {
 
 	in := pipeline.Event{Parsed: map[string]string{"something": "something"}}
 	// pour an item that will go to leaky + counter
-	ok, err := PourItemToHolders(ctx, in, Holders, bucketStore, nil)
+	ok, err := PourItemToHolders(ctx, in, holders, bucketStore, nil)
 	if err != nil {
 		t.Fatalf("while pouring item: %s", err)
 	}

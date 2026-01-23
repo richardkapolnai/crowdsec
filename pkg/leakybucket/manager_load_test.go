@@ -32,7 +32,7 @@ func runTest(tests []cfgTest) error {
 }
 
 func TestBadBucketsConfig(t *testing.T) {
-	var CfgTests = []cfgTest{
+	var tests = []cfgTest{
 		// empty
 		{BucketFactory{}, false, false},
 		// missing description
@@ -42,13 +42,13 @@ func TestBadBucketsConfig(t *testing.T) {
 		// bad type
 		{BucketFactory{Name: "test", Description: "test1", Type: "ratata"}, false, false},
 	}
-	if err := runTest(CfgTests); err != nil {
+	if err := runTest(tests); err != nil {
 		t.Fatalf("%s", err)
 	}
 }
 
 func TestLeakyBucketsConfig(t *testing.T) {
-	CfgTests := []cfgTest{
+	tests := []cfgTest{
 		// leaky with bad capacity
 		{BucketFactory{Name: "test", Description: "test1", Type: "leaky", Capacity: 0}, false, false},
 		// leaky with empty leakspeed
@@ -81,37 +81,37 @@ func TestLeakyBucketsConfig(t *testing.T) {
 		{BucketFactory{Name: "test", Description: "test1", Type: "leaky", Capacity: 1, LeakSpeed: "1s", Filter: "true", ConditionalOverflow: "true"}, true, true},
 	}
 
-	if err := runTest(CfgTests); err != nil {
+	if err := runTest(tests); err != nil {
 		t.Fatalf("%s", err)
 	}
 }
 
 func TestBlackholeConfig(t *testing.T) {
-	CfgTests := []cfgTest{
+	tests := []cfgTest{
 		// basic bh
 		{BucketFactory{Name: "test", Description: "test1", Type: "trigger", Filter: "true", Blackhole: "15s"}, true, true},
 		// bad bh
 		{BucketFactory{Name: "test", Description: "test1", Type: "trigger", Filter: "true", Blackhole: "abc"}, false, true},
 	}
 
-	if err := runTest(CfgTests); err != nil {
+	if err := runTest(tests); err != nil {
 		t.Fatalf("%s", err)
 	}
 }
 
 func TestTriggerBucketsConfig(t *testing.T) {
-	CfgTests := []cfgTest{
+	tests := []cfgTest{
 		// basic valid counter
 		{BucketFactory{Name: "test", Description: "test1", Type: "trigger", Filter: "true"}, true, true},
 	}
 
-	if err := runTest(CfgTests); err != nil {
+	if err := runTest(tests); err != nil {
 		t.Fatalf("%s", err)
 	}
 }
 
 func TestCounterBucketsConfig(t *testing.T) {
-	CfgTests := []cfgTest{
+	tests := []cfgTest{
 		// basic valid counter
 		{BucketFactory{Name: "test", Description: "test1", Type: "counter", Capacity: -1, Duration: "5s", Filter: "true"}, true, true},
 		// missing duration
@@ -121,13 +121,13 @@ func TestCounterBucketsConfig(t *testing.T) {
 		// capacity must be -1
 		{BucketFactory{Name: "test", Description: "test1", Type: "counter", Capacity: 0, Duration: "5s", Filter: "true"}, false, false},
 	}
-	if err := runTest(CfgTests); err != nil {
+	if err := runTest(tests); err != nil {
 		t.Fatalf("%s", err)
 	}
 }
 
 func TestBayesianBucketsConfig(t *testing.T) {
-	CfgTests := []cfgTest{
+	tests := []cfgTest{
 		// basic valid counter
 		{BucketFactory{Name: "test", Description: "test1", Type: "bayesian", Capacity: -1, Filter: "true", BayesianPrior: 0.5, BayesianThreshold: 0.5, BayesianConditions: []RawBayesianCondition{{ConditionalFilterName: "true", ProbGivenEvil: 0.5, ProbGivenBenign: 0.5}}}, true, true},
 		// bad capacity
@@ -141,7 +141,7 @@ func TestBayesianBucketsConfig(t *testing.T) {
 		// bad threshold
 		{BucketFactory{Name: "test", Description: "test1", Type: "bayesian", Capacity: -1, Filter: "true", BayesianPrior: 0.5, BayesianThreshold: 1.5, BayesianConditions: []RawBayesianCondition{{ConditionalFilterName: "true", ProbGivenEvil: 0.5, ProbGivenBenign: 0.5}}}, false, false},
 	}
-	if err := runTest(CfgTests); err != nil {
+	if err := runTest(tests); err != nil {
 		t.Fatalf("%s", err)
 	}
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/crowdsecurity/go-cs-lib/ptr"
+
 	"github.com/crowdsecurity/crowdsec/pkg/alertcontext"
 	"github.com/crowdsecurity/crowdsec/pkg/exprhelpers"
 	"github.com/crowdsecurity/crowdsec/pkg/models"
@@ -253,7 +255,7 @@ func EventsFromQueue(queue *pipeline.Queue) []*models.Event {
 
 // alertFormatSource iterates over the queue to collect sources
 func alertFormatSource(leaky *Leaky, queue *pipeline.Queue) (map[string]models.Source, string, error) {
-	var source_type string
+	var sourceType string
 
 	sources := make(map[string]models.Source)
 
@@ -267,20 +269,20 @@ func alertFormatSource(leaky *Leaky, queue *pipeline.Queue) (map[string]models.S
 		}
 
 		for key, src := range srcs {
-			if source_type == types.Undefined {
-				source_type = *src.Scope
+			if sourceType == types.Undefined {
+				sourceType = *src.Scope
 			}
 
-			if *src.Scope != source_type {
+			if *src.Scope != sourceType {
 				return nil, "",
-					fmt.Errorf("event has multiple source types : %s != %s", *src.Scope, source_type)
+					fmt.Errorf("event has multiple source types : %s != %s", *src.Scope, sourceType)
 			}
 
 			sources[key] = src
 		}
 	}
 
-	return sources, source_type, nil
+	return sources, sourceType, nil
 }
 
 // NewAlert will generate a RuntimeAlert and its APIAlert(s) from a bucket that overflowed
@@ -291,31 +293,29 @@ func NewAlert(leaky *Leaky, queue *pipeline.Queue) (pipeline.RuntimeAlert, error
 	/*
 		Craft the models.Alert that is going to be duplicated for each source
 	*/
-	start_at, err := leaky.First_ts.MarshalText()
+	startAt, err := leaky.First_ts.MarshalText()
 	if err != nil {
 		log.Warningf("failed to serialize start ts %s : %s", leaky.First_ts.String(), err)
 	}
 
-	stop_at, err := leaky.Ovflw_ts.MarshalText()
+	stopAt, err := leaky.Ovflw_ts.MarshalText()
 	if err != nil {
 		log.Warningf("failed to serialize ovflw ts %s : %s", leaky.First_ts.String(), err)
 	}
 
 	capacity := int32(leaky.Capacity)
-	EventsCount := int32(leaky.Total_count)
+	eventsCount := int32(leaky.Total_count)
 	leakSpeed := leaky.Leakspeed.String()
-	startAt := string(start_at)
-	stopAt := string(stop_at)
 	apiAlert := models.Alert{
 		Scenario:        &leaky.Name,
 		ScenarioHash:    &leaky.hash,
 		ScenarioVersion: &leaky.scenarioVersion,
 		Capacity:        &capacity,
-		EventsCount:     &EventsCount,
+		EventsCount:     &eventsCount,
 		Leakspeed:       &leakSpeed,
 		Message:         new(string),
-		StartAt:         &startAt,
-		StopAt:          &stopAt,
+		StartAt:         ptr.Of(string(startAt)),
+		StopAt:          ptr.Of(string(stopAt)),
 		Simulated:       &leaky.Simulated,
 	}
 
@@ -327,7 +327,7 @@ func NewAlert(leaky *Leaky, queue *pipeline.Queue) (pipeline.RuntimeAlert, error
 	runtimeAlert.Mapkey = leaky.Mapkey
 
 	// Get the sources from Leaky/Queue
-	sources, source_scope, err := alertFormatSource(leaky, queue)
+	sources, sourceScope, err := alertFormatSource(leaky, queue)
 	if err != nil {
 		return runtimeAlert, fmt.Errorf("unable to collect sources from bucket: %w", err)
 	}
@@ -344,7 +344,7 @@ func NewAlert(leaky *Leaky, queue *pipeline.Queue) (pipeline.RuntimeAlert, error
 		}
 	}
 
-	*apiAlert.Message = fmt.Sprintf("%s %s performed '%s' (%d events over %s) at %s", source_scope, sourceStr, leaky.Name, leaky.Total_count, leaky.Ovflw_ts.Sub(leaky.First_ts), leaky.Last_ts)
+	*apiAlert.Message = fmt.Sprintf("%s %s performed '%s' (%d events over %s) at %s", sourceScope, sourceStr, leaky.Name, leaky.Total_count, leaky.Ovflw_ts.Sub(leaky.First_ts), leaky.Last_ts)
 	// Get the events from Leaky/Queue
 	apiAlert.Events = EventsFromQueue(queue)
 
@@ -357,20 +357,20 @@ func NewAlert(leaky *Leaky, queue *pipeline.Queue) (pipeline.RuntimeAlert, error
 
 	// Loop over the Sources and generate appropriate number of ApiAlerts
 	for _, srcValue := range sources {
-		newApiAlert := apiAlert
+		newAPIAlert := apiAlert
 		srcCopy := srcValue
-		newApiAlert.Source = &srcCopy
+		newAPIAlert.Source = &srcCopy
 
 		//revive:disable-next-line:bool-literal-in-expr
 		if v, ok := leaky.BucketConfig.Labels["remediation"]; ok && v == true {
-			newApiAlert.Remediation = true
+			newAPIAlert.Remediation = true
 		}
 
-		if err := newApiAlert.Validate(strfmt.Default); err != nil {
-			return runtimeAlert, fmt.Errorf("invalid generated alert: %w: %s", err, spew.Sdump(newApiAlert))
+		if err := newAPIAlert.Validate(strfmt.Default); err != nil {
+			return runtimeAlert, fmt.Errorf("invalid generated alert: %w: %s", err, spew.Sdump(newAPIAlert))
 		}
 
-		runtimeAlert.APIAlerts = append(runtimeAlert.APIAlerts, newApiAlert)
+		runtimeAlert.APIAlerts = append(runtimeAlert.APIAlerts, newAPIAlert)
 	}
 
 	if len(runtimeAlert.APIAlerts) > 0 {

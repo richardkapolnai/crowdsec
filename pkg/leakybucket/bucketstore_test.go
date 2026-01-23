@@ -164,7 +164,7 @@ func testFile(t *testing.T, file string, holders []BucketFactory, response chan 
 		}
 		log.Warning("end of test file")
 	}
-	var latest_ts time.Time
+	var latestTS time.Time
 	ctx := t.Context()
 	for _, in := range tf.Lines {
 		// just to avoid any race during ingestion of funny scenarios
@@ -175,10 +175,10 @@ func testFile(t *testing.T, file string, holders []BucketFactory, response chan 
 			t.Fatalf("Failed to parse time from input event : %s", err)
 		}
 
-		if latest_ts.IsZero() {
-			latest_ts = ts
-		} else if ts.After(latest_ts) {
-			latest_ts = ts
+		if latestTS.IsZero() {
+			latestTS = ts
+		} else if ts.After(latestTS) {
+			latestTS = ts
 		}
 
 		in.ExpectMode = pipeline.TIMEMACHINE

@@ -11,15 +11,15 @@ import (
 type BucketStore struct {
 	wgDumpState *sync.WaitGroup
 	wgPour      *sync.WaitGroup
-	// evaluate regular map + mutex
-	Bucket_map  *sync.Map
+	// XXX: evaluate regular map + mutex
+	BucketMap  *sync.Map
 }
 
 func NewBucketStore() *BucketStore {
 	return &BucketStore{
 		wgDumpState: &sync.WaitGroup{},
 		wgPour:      &sync.WaitGroup{},
-		Bucket_map:  &sync.Map{},
+		BucketMap:  &sync.Map{},
 	}
 }
 
